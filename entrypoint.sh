@@ -5,7 +5,7 @@ run(){
     while true; do          
         python main.py
         echo "Error during python process."
-        sleep 3600
+        sleep 300
         echo "Restarting..."
     done
 }

@@ -53,7 +53,11 @@ class ArloHandler:
                 # Wait for cam to start recording
                 time.sleep(4)
 
-                response = arlo.request.post('https://my.arlo.com/hmsweb/users/devices/takeSnapshot', {'xcloudId':camera.get('xCloudId'),'parentId':camera.get('parentId'),'deviceId':camera.get('deviceId'),'olsonTimeZone':camera.get('properties', {}).get('olsonTimeZone')}, headers={"xcloudId":camera.get('xCloudId')})
+                try:
+                    arlo.request.post('https://my.arlo.com/hmsweb/users/devices/takeSnapshot', {'xcloudId':camera.get('xCloudId'),'parentId':camera.get('parentId'),'deviceId':camera.get('deviceId'),'olsonTimeZone':camera.get('properties', {}).get('olsonTimeZone')}, headers={"xcloudId":camera.get('xCloudId')})
+                except Exception as e:
+                    print("Failed to request snapshot")
+                    print(e)
 
         elif ("cameras" in event["resource"]) and (isinstance(event["properties"],list)):
 
