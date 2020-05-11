@@ -2,6 +2,8 @@ FROM arm32v7/python:alpine
 
 COPY qemu-arm-static /usr/bin
 
+ENV PYTHONUNBUFFERED=0
+
 RUN mkdir -p /usr/app
 COPY . /usr/app
 WORKDIR /usr/app
