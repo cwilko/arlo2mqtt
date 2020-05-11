@@ -67,7 +67,7 @@ class ArloHandler:
                 cam_name = id_map[x["serialNumber"]]
 
                 data = {
-                    "device": cam_name,
+                    "device": cam_name.replace(" ", "\ "),
                     "id": x["serialNumber"],
                     "batteryLevel": x["batteryLevel"],
                     "signalStrength": x["signalStrength"],
