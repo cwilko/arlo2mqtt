@@ -74,7 +74,7 @@ class ArloHandler:
                     "connectionState": x["connectionState"]
                 }   
 
-                self.mqttClient.publish("sensors/arlo/" + cam_name, str(data))   
+                self.mqttClient.publish("sensors/arlo/" + cam_name, json.dumps(data))   
 
         elif "mediaUploadNotification" in event['resource'] :
             # Snapshot generated - notify to MQTT
