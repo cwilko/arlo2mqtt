@@ -100,6 +100,7 @@ def stateEventGenerator(arlo, basestation):
 ## Initiate MQTT client
 client = mqtt.Client()
 client.connect(MQTT_HOST, MQTT_PORT, 60)
+client.loop_start()
 
 # Instantiating the Arlo object automatically calls Login(), which returns an oAuth token 
 # that gets cached. Subsequent successful calls to login will update the oAuth token.
