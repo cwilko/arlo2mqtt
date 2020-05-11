@@ -5,6 +5,7 @@ import time
 import queue
 import json
 import os
+import traceback
 
 USERNAME = os.environ.get('ARLO_USERNAME')
 PASSWORD = os.environ.get('ARLO_PASSWORD')
@@ -121,5 +122,6 @@ while True:
     except Exception as e:
         print("Error during event loop")
         print(e)
-        break
+        traceback.print_exc()
+        time.sleep(60)
 
