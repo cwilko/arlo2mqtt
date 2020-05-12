@@ -24,7 +24,7 @@ class ArloHandler:
         self.mqttClient = mqttClient
 
     def __call__(self, arlo, event):
-        print(event)
+        #print(event)
 
         if "resource" in event:
 
