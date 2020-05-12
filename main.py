@@ -14,8 +14,8 @@ MQTT_PORT = int(os.environ.get('MQTT_PORT'))
 INTERVAL = int(os.environ.get('INTERVAL'))
 
 id_map = {
-    "52M1837KA799C":"Front Door",
-    "59U18177AF155":"Driveway",
+    "52M1837KA799C":"Driveway",
+    "59U18177AF155":"Front Door",
     "A021927FA04D2":"Back Door"
     }
 
@@ -34,12 +34,19 @@ class ArloHandler:
                 cam_id = event['resource'].split("/",1)[1]
                 cam_name = id_map[cam_id]
 
+                data = {
+                        "device": cam_name.replace(" ", "\ "),
+                        "id": cam_id,
+                        "motion": 1
+                    } 
+
                 self.mqttClient.publish("events/home/sensor/arlo/"+cam_name+"/motion/priority/OK", "Motion detected on camera: " + cam_name)
-                   
+                self.mqttClient.publish("sensors/arlo/motion/" + cam_name, json.dumps(data)) 
+
                 basestations = arlo.GetDevices('basestation')
 
                 # Here you will have access to self, the basestation JSON object, and the event schema.
-                print("motion event detected!")
+                print("motion event detected on " + cam_name)
 
                 # Get the list of devices and filter on device type to only get the cameras.
                 # This will return an array of cameras, including all of the cameras' associated metadata.
@@ -50,7 +57,7 @@ class ArloHandler:
 
                     url = camera["presignedLastImageUrl"]
                     ts =  camera["lastModified"]
-                    print(url)
+                    #print(url)
                     #print(datetime.datetime.fromtimestamp(ts/1000.0))
 
                     # Wait for cam to start recording
@@ -76,7 +83,7 @@ class ArloHandler:
                         "connectionState": x["connectionState"]
                     }   
 
-                    self.mqttClient.publish("sensors/arlo/" + cam_name, json.dumps(data))   
+                    self.mqttClient.publish("sensors/arlo/metrics/" + cam_name, json.dumps(data))   
 
             elif "mediaUploadNotification" in event['resource'] :
                 # Snapshot generated - notify to MQTT
