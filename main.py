@@ -80,7 +80,7 @@ class ArloHandler:
                         "id": x["serialNumber"],
                         "batteryLevel": x["batteryLevel"],
                         "signalStrength": x["signalStrength"],
-                        "connectionState": x["connectionState"]
+                        "connectionState": 1 if x["connectionState"] == "available" else 0
                     }   
 
                     self.mqttClient.publish("sensors/arlo/metrics/" + cam_name, json.dumps(data))   
