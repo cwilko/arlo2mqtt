@@ -26,62 +26,64 @@ class ArloHandler:
     def __call__(self, arlo, event):
         print(event)
 
-        if ("cameras/" in event['resource']) and (event.get('properties', {}).get('motionDetected')):
-            # Motion detected - notify to MQTT
+        if "resource" in event:
 
-            cam_id = event['resource'].split("/",1)[1]
-            cam_name = id_map[cam_id]
+            if ("cameras/" in event['resource']) and (event.get('properties', {}).get('motionDetected')):
+                # Motion detected - notify to MQTT
 
-            self.mqttClient.publish("events/home/sensor/arlo/"+cam_name+"/motion/priority/OK", "Motion detected on camera: " + cam_name)
-               
-            basestations = arlo.GetDevices('basestation')
+                cam_id = event['resource'].split("/",1)[1]
+                cam_name = id_map[cam_id]
 
-            # Here you will have access to self, the basestation JSON object, and the event schema.
-            print("motion event detected!")
+                self.mqttClient.publish("events/home/sensor/arlo/"+cam_name+"/motion/priority/OK", "Motion detected on camera: " + cam_name)
+                   
+                basestations = arlo.GetDevices('basestation')
 
-            # Get the list of devices and filter on device type to only get the cameras.
-            # This will return an array of cameras, including all of the cameras' associated metadata.
-            cameras = arlo.GetDevices('camera')
-            camera = next((x for x in cameras if x["deviceId"] == cam_id), None)
+                # Here you will have access to self, the basestation JSON object, and the event schema.
+                print("motion event detected!")
 
-            if (camera is not None):
+                # Get the list of devices and filter on device type to only get the cameras.
+                # This will return an array of cameras, including all of the cameras' associated metadata.
+                cameras = arlo.GetDevices('camera')
+                camera = next((x for x in cameras if x["deviceId"] == cam_id), None)
 
-                url = camera["presignedLastImageUrl"]
-                ts =  camera["lastModified"]
-                print(url)
-                #print(datetime.datetime.fromtimestamp(ts/1000.0))
+                if (camera is not None):
 
-                # Wait for cam to start recording
-                time.sleep(4)
+                    url = camera["presignedLastImageUrl"]
+                    ts =  camera["lastModified"]
+                    print(url)
+                    #print(datetime.datetime.fromtimestamp(ts/1000.0))
 
-                try:
-                    arlo.request.post('https://my.arlo.com/hmsweb/users/devices/takeSnapshot', {'xcloudId':camera.get('xCloudId'),'parentId':camera.get('parentId'),'deviceId':camera.get('deviceId'),'olsonTimeZone':camera.get('properties', {}).get('olsonTimeZone')}, headers={"xcloudId":camera.get('xCloudId')})
-                except Exception as e:
-                    print("Failed to request snapshot")
-                    print(e)
+                    # Wait for cam to start recording
+                    time.sleep(4)
 
-        elif ("cameras" in event["resource"]) and (isinstance(event["properties"],list)):
+                    try:
+                        arlo.request.post('https://my.arlo.com/hmsweb/users/devices/takeSnapshot', {'xcloudId':camera.get('xCloudId'),'parentId':camera.get('parentId'),'deviceId':camera.get('deviceId'),'olsonTimeZone':camera.get('properties', {}).get('olsonTimeZone')}, headers={"xcloudId":camera.get('xCloudId')})
+                    except Exception as e:
+                        print("Failed to request snapshot")
+                        print(e)
 
-            # Get Camera state and send to MQTT
-            for x in event["properties"]:
-                cam_name = id_map[x["serialNumber"]]
+            elif ("cameras" in event["resource"]) and (isinstance(event["properties"],list)):
 
-                data = {
-                    "device": cam_name.replace(" ", "\ "),
-                    "id": x["serialNumber"],
-                    "batteryLevel": x["batteryLevel"],
-                    "signalStrength": x["signalStrength"],
-                    "connectionState": x["connectionState"]
-                }   
+                # Get Camera state and send to MQTT
+                for x in event["properties"]:
+                    cam_name = id_map[x["serialNumber"]]
 
-                self.mqttClient.publish("sensors/arlo/" + cam_name, json.dumps(data))   
+                    data = {
+                        "device": cam_name.replace(" ", "\ "),
+                        "id": x["serialNumber"],
+                        "batteryLevel": x["batteryLevel"],
+                        "signalStrength": x["signalStrength"],
+                        "connectionState": x["connectionState"]
+                    }   
 
-        elif "mediaUploadNotification" in event['resource'] :
-            # Snapshot generated - notify to MQTT
-            if "snapshot" in event["presignedContentUrl"]:
-                #arlo.DownloadSnapshot(event["presignedContentUrl"], 'snapshot.jpg')  
-                cam_name = id_map[event["deviceId"]]
-                self.mqttClient.publish("events-json/home/sensor/arlo/"+cam_name+"/snapshot/priority/OK", json.dumps({ "msg": "Snapshot captured on camera: " + cam_name, "url": event["presignedContentUrl"]}))
+                    self.mqttClient.publish("sensors/arlo/" + cam_name, json.dumps(data))   
+
+            elif "mediaUploadNotification" in event['resource'] :
+                # Snapshot generated - notify to MQTT
+                if "snapshot" in event["presignedContentUrl"]:
+                    #arlo.DownloadSnapshot(event["presignedContentUrl"], 'snapshot.jpg')  
+                    cam_name = id_map[event["deviceId"]]
+                    self.mqttClient.publish("events-json/home/sensor/arlo/"+cam_name+"/snapshot/priority/OK", json.dumps({ "msg": "Snapshot captured on camera: " + cam_name, "url": event["presignedContentUrl"]}))
 
 def stateEventGenerator(arlo, basestation):
     while True:
