@@ -57,7 +57,7 @@ class ArloHandler:
 
                     url = camera["presignedLastImageUrl"]
                     ts =  camera["lastModified"]
-                    #print(url)
+                    print(url)
                     #print(datetime.datetime.fromtimestamp(ts/1000.0))
 
                     # Wait for cam to start recording
@@ -90,7 +90,7 @@ class ArloHandler:
                 if "snapshot" in event["presignedContentUrl"]:
                     #arlo.DownloadSnapshot(event["presignedContentUrl"], 'snapshot.jpg')  
                     cam_name = id_map[event["deviceId"]]
-                    self.mqttClient.publish("events-json/home/sensor/arlo/"+cam_name+"/snapshot/priority/OK", json.dumps({ "msg": "Snapshot captured on camera: " + cam_name, "url": event["presignedContentUrl"]}))
+                    self.mqttClient.publish("events-json/system/sensor/arlo/"+cam_name+"/snapshot/priority/OK", json.dumps({ "msg": "Snapshot captured on camera: " + cam_name, "url": event["presignedContentUrl"]}))
 
 def stateEventGenerator(arlo, basestation):
     while True:
