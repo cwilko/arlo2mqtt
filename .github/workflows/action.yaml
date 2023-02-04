@@ -1,4 +1,4 @@
-name: ${{ vars.GITHUB_REPOSITORY }}
+name: Build and Push
 
 on: [push]
 
@@ -27,5 +27,5 @@ jobs:
         with:
           context: docker
           push: true
-          platforms: linux/arm64
-          tags: ${{ vars.GITHUB_REPOSITORY }}:latest
+          platforms: linux/arm/v7, linux/arm64
+          tags: ${{ github.repository }}:latest
