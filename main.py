@@ -14,34 +14,36 @@ MQTT_PORT = int(os.environ.get('MQTT_PORT'))
 INTERVAL = int(os.environ.get('INTERVAL'))
 
 id_map = {
-    "52M1837KA799C":"Driveway",
-    "59U18177AF155":"Front Door",
-    "A021927FA04D2":"Back Door"
-    }
+    "52M1837KA799C": "Driveway",
+    "59U18177AF155": "Front Door",
+    "A021927FA04D2": "Back Door"
+}
+
 
 class ArloHandler:
+
     def __init__(self, mqttClient):
         self.mqttClient = mqttClient
 
     def __call__(self, arlo, event):
-        #print(event)
+        # print(event)
 
         if "resource" in event:
 
             if ("cameras/" in event['resource']) and (event.get('properties', {}).get('motionDetected')):
                 # Motion detected - notify to MQTT
 
-                cam_id = event['resource'].split("/",1)[1]
+                cam_id = event['resource'].split("/", 1)[1]
                 cam_name = id_map[cam_id]
 
                 data = {
-                        "device": cam_name.replace(" ", "\ "),
-                        "id": cam_id,
-                        "motion": 1
-                    } 
+                    "device": cam_name.replace(" ", "\ "),
+                    "id": cam_id,
+                    "motion": 1
+                }
 
-                self.mqttClient.publish("events/home/sensor/arlo/"+cam_name+"/motion/priority/OK", "Motion detected on camera: " + cam_name)
-                self.mqttClient.publish("sensors/arlo/motion/" + cam_name, json.dumps(data)) 
+                self.mqttClient.publish("events/home/sensor/arlo/" + cam_name + "/motion/priority/OK", "Motion detected on camera: " + cam_name)
+                self.mqttClient.publish("sensors/arlo/motion/" + cam_name, json.dumps(data))
 
                 basestations = arlo.GetDevices('basestation')
 
@@ -56,20 +58,21 @@ class ArloHandler:
                 if (camera is not None):
 
                     url = camera["presignedLastImageUrl"]
-                    ts =  camera["lastModified"]
+                    ts = camera["lastModified"]
                     print(url)
-                    #print(datetime.datetime.fromtimestamp(ts/1000.0))
+                    # print(datetime.datetime.fromtimestamp(ts/1000.0))
 
                     # Wait for cam to start recording
                     time.sleep(4)
 
                     try:
-                        arlo.request.post('https://my.arlo.com/hmsweb/users/devices/takeSnapshot', {'xcloudId':camera.get('xCloudId'),'parentId':camera.get('parentId'),'deviceId':camera.get('deviceId'),'olsonTimeZone':camera.get('properties', {}).get('olsonTimeZone')}, headers={"xcloudId":camera.get('xCloudId')})
+                        arlo.request.post('https://my.arlo.com/hmsweb/users/devices/takeSnapshot', {'xcloudId': camera.get('xCloudId'), 'parentId': camera.get('parentId'),
+                                                                                                    'deviceId': camera.get('deviceId'), 'olsonTimeZone': camera.get('properties', {}).get('olsonTimeZone')}, headers={"xcloudId": camera.get('xCloudId')})
                     except Exception as e:
                         print("Failed to request snapshot")
                         print(e)
 
-            elif ("cameras" in event["resource"]) and (isinstance(event["properties"],list)):
+            elif ("cameras" in event["resource"]) and (isinstance(event["properties"], list)):
 
                 # Get Camera state and send to MQTT
                 for x in event["properties"]:
@@ -81,23 +84,24 @@ class ArloHandler:
                         "batteryLevel": x["batteryLevel"],
                         "signalStrength": x["signalStrength"],
                         "connectionState": 1 if x["connectionState"] == "available" else 0
-                    }   
+                    }
 
-                    self.mqttClient.publish("sensors/arlo/metrics/" + cam_name, json.dumps(data))   
+                    self.mqttClient.publish("sensors/arlo/metrics/" + cam_name, json.dumps(data))
 
-            elif "mediaUploadNotification" in event['resource'] :
+            elif "mediaUploadNotification" in event['resource']:
                 # Snapshot generated - notify to MQTT
                 if "snapshot" in event["presignedContentUrl"]:
-                    #arlo.DownloadSnapshot(event["presignedContentUrl"], 'snapshot.jpg')  
+                    #arlo.DownloadSnapshot(event["presignedContentUrl"], 'snapshot.jpg')
                     cam_name = id_map[event["deviceId"]]
-                    self.mqttClient.publish("events-json/system/sensor/arlo/"+cam_name+"/snapshot/priority/OK", json.dumps({ "msg": "Snapshot captured on camera: " + cam_name, "url": event["presignedContentUrl"]}))
+                    self.mqttClient.publish("events-json/system/sensor/arlo/" + cam_name + "/snapshot/priority/OK", json.dumps({"msg": "Snapshot captured on camera: " + cam_name, "url": event["presignedContentUrl"]}))
+
 
 def stateEventGenerator(arlo, basestation):
     while True:
         try:
             time.sleep(INTERVAL)
 
-            arlo.Notify(basestation, {"action":"get","resource":"cameras","publishResponse":False})
+            arlo.Notify(basestation, {"action": "get", "resource": "cameras", "publishResponse": False})
 
         except Exception as e:
             print("Failed to request state information from Basestation")
@@ -106,12 +110,12 @@ def stateEventGenerator(arlo, basestation):
             time.sleep(INTERVAL)
 
 
-## Initiate MQTT client
+# Initiate MQTT client
 client = mqtt.Client()
 client.connect(MQTT_HOST, MQTT_PORT, 60)
 client.loop_start()
 
-# Instantiating the Arlo object automatically calls Login(), which returns an oAuth token 
+# Instantiating the Arlo object automatically calls Login(), which returns an oAuth token
 # that gets cached. Subsequent successful calls to login will update the oAuth token.
 arlo = Arlo(USERNAME, PASSWORD)
 # At this point you're logged into Arlo.
@@ -134,4 +138,3 @@ while True:
         print(e)
         traceback.print_exc()
         time.sleep(60)
-
