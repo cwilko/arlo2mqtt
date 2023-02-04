@@ -1,4 +1,4 @@
-name: ${{ github.repository }}
+name: ${{ vars.GITHUB_REPOSITORY }}
 
 on: [push]
 
@@ -28,4 +28,4 @@ jobs:
           context: docker
           push: true
           platforms: linux/arm64
-          tags: cwilko/${{ github.repository }}:latest
+          tags: ${{ vars.GITHUB_REPOSITORY }}:latest
