@@ -1,2 +1,3 @@
-arlo==1.2.62
+arlo @ git+https://github.com/cwilko/arlo.git#egg=arlo
+#arlo==1.2.62
 paho-mqtt==1.5.0

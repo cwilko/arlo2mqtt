@@ -117,7 +117,8 @@ client.loop_start()
 
 # Instantiating the Arlo object automatically calls Login(), which returns an oAuth token
 # that gets cached. Subsequent successful calls to login will update the oAuth token.
-arlo = Arlo(USERNAME, PASSWORD)
+arlo = Arlo(USERNAME, PASSWORD, "./creds/gmail.credentials")
+
 # At this point you're logged into Arlo.
 
 # Get the list of devices and filter on device type to only get the basestation.
